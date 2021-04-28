@@ -146,8 +146,6 @@ if (window.addEventListener) {
                         img_update();
                     }
                 };
-                console.log(coords);
-                //download("alggo.txt", coords);
             };
 
             tools.ponto = function () {
@@ -165,6 +163,7 @@ if (window.addEventListener) {
                         context.moveTo(ev._x, ev._y);
                         context.lineTo(ev._x, ev._y);
                         context.stroke();
+                        coords.push([ev._x, ev._y]);
                     }
                 };
 
@@ -175,7 +174,6 @@ if (window.addEventListener) {
                         img_update();
                     }
                 };
-
             };
 
             tools.linha = function () {
@@ -200,6 +198,7 @@ if (window.addEventListener) {
                     context.lineTo(ev._x, ev._y);
                     context.stroke();
                     context.closePath();
+                    coords.push([tool.x0, tool.y0, ev._x, ev._y]);
                 };
 
                 this.mouseup = function (ev) {
@@ -253,6 +252,11 @@ if (window.addEventListener) {
                     }
                     context.fill();
                     context.closePath();
+
+                    var coordenadas = coordinates.values();
+                    for (let letter of coordenadas) {
+                        coords.push([letter.x, letter.y]);
+                    }
                 };
 
                 this.mouseup = function (ev) {
@@ -299,6 +303,16 @@ if (window.addEventListener) {
                     );
                     context.stroke();
                     context.closePath();
+                    coords.push([
+                        ev._x,
+                        ev._y,
+                        midx1,
+                        midy1,
+                        midx2,
+                        midy2,
+                        tool.x0,
+                        tool.y0,
+                    ]);
                 };
 
                 this.mouseup = function (ev) {
@@ -340,6 +354,7 @@ if (window.addEventListener) {
                     );
 
                     context.fill();
+                    coords.push([tool.x0, tool.y0]);
                 };
 
                 this.mouseup = function (ev) {
@@ -362,18 +377,22 @@ function erase() {
         canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        coords = [];
     }
 }
 
 function download() {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(coords));
-    element.setAttribute('download', "filename.txt");
-  
-    element.style.display = 'none';
+    var element = document.createElement("a");
+    element.setAttribute(
+        "href",
+        "data:text/plain;charset=utf-8," + encodeURIComponent(coords)
+    );
+    element.setAttribute("download", "filename.txt");
+
+    element.style.display = "none";
     document.body.appendChild(element);
-  
+
     element.click();
-  
+
     document.body.removeChild(element);
-  }
+}
