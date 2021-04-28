@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./canvas.css" />
+    <title>Canvas</title>
+</head>
+<body>
+    <div id="container">
+      <canvas id="canvas" width="600" height="600"> </canvas>
+    </div>
+
+    <div id="controls">
+      <p><label>Ferramenta de desenho: <select id="dtool">
+        <option value="lapis">Lápis</option>
+        <option value="ponto">Ponto</option>
+        <option value="linha">Linha</option>
+        <option value="retangulo">Retângulo</option>
+        <option value="poligono">Polígono</option>
+        <option value="bezier">Bezier</option>
+        <option value="circulo">Círculo</option>
+      </select></label></p>
+  
+      <p><label>Quantidade de lados do polígono: <input id="polygonSides" type="range" value="3" step="1" min="3" max="10" 
+        oninput="this.nextElementSibling.value = this.value" onchange="updateValue()"> <output>3</output></label></p>
+
+      <input type="button" value="Limpar Canvas" id="clr" size="30" onclick="erase()">
+  
+    </div>
+
+    <script src="./canvas.js"></script>
+</body>
+</html>
