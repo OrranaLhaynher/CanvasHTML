@@ -209,45 +209,6 @@ if (window.addEventListener) {
                 };
             };
 
-            // The rectangle tool.
-            tools.retangulo = function () {
-                var tool = this;
-                this.started = false;
-
-                this.mousedown = function (ev) {
-                    tool.started = true;
-                    tool.x0 = ev._x;
-                    tool.y0 = ev._y;
-                };
-
-                this.mousemove = function (ev) {
-                    if (!tool.started) {
-                        return;
-                    }
-
-                    var x = Math.min(ev._x, tool.x0),
-                        y = Math.min(ev._y, tool.y0),
-                        w = Math.abs(ev._x - tool.x0),
-                        h = Math.abs(ev._y - tool.y0);
-
-                    context.clearRect(0, 0, canvas.width, canvas.height);
-
-                    if (!w || !h) {
-                        return;
-                    }
-
-                    context.strokeRect(x, y, w, h);
-                };
-
-                this.mouseup = function (ev) {
-                    if (tool.started) {
-                        tool.mousemove(ev);
-                        tool.started = false;
-                        img_update();
-                    }
-                };
-            };
-
             // The poligono tool.
             tools.poligono = function () {
                 var tool = this,
