@@ -14,7 +14,7 @@ input { position: absolute; top: 180px; left: 780px; } */
     left:700px;
     padding:20px;
     border: 1px solid gray;
-    background-color: lightskyblue;
+    background-color: rgb(212, 211, 212);
     border-radius: 10px;
-    box-shadow: 2px 2px 12px lightskyblue;
+    box-shadow: 2px 2px 12px rgb(234, 240, 245);
 }

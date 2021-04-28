@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./canvas.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.js"></script>
     <title>Canvas</title>
 </head>
 <body>
@@ -21,14 +22,27 @@
         <option value="bezier">Bezier</option>
         <option value="circulo">Círculo</option>
       </select></label></p>
-  
+
+      <p><label>Cor do traço: <input id="strokeColor" type="color"></label></p>
+      <p><label>Cor de preenchimento: <input id="fillColor" type="color"></label></p>
+      
+      <p><label>Espessura da linha de desenho: <input id="lineWidth" type="range" value="1" step="1" min="1" max="20" 
+        oninput="this.nextElementSibling.value = this.value"> <output>1</output></label></p>
+
       <p><label>Quantidade de lados do polígono: <input id="polygonSides" type="range" value="3" step="1" min="3" max="10" 
         oninput="this.nextElementSibling.value = this.value" onchange="updateValue()"> <output>3</output></label></p>
 
+      <p><label>Tamanho da bezier: <input id="bezierLenght" type="range" value="2" step="1" min="2" max="6" 
+        oninput="this.nextElementSibling.value = this.value" onchange="updateValueBezier()"> <output>2</output></label></p>
+
       <input type="button" value="Limpar Canvas" id="clr" size="30" onclick="erase()">
+
+      <button onclick="download()">Export data to local txt file</button>
   
     </div>
 
-    <script src="./canvas.js"></script>
+    <div id="teste"></div>
+
+    <script data-main="./canvas.js" src="require.js"></script>
 </body>
 </html>

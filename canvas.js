@@ -1,16 +1,16 @@
-// Keep everything in anonymous function, called on window load.
+//import fs from 'fs';
+var coords = [];
+
 if (window.addEventListener) {
     window.addEventListener(
         "load",
         function () {
             var canvas, context, canvaso, contexto;
 
-            // The active tool instance.
             var tool;
             var tool_default = "lapis";
 
             function init() {
-                // Find the canvas element.
                 canvaso = document.getElementById("canvas");
                 if (!canvaso) {
                     alert("Error: I cannot find the canvas element!");
@@ -22,14 +22,12 @@ if (window.addEventListener) {
                     return;
                 }
 
-                // Get the 2D canvas context.
                 contexto = canvaso.getContext("2d");
                 if (!contexto) {
                     alert("Error: failed to getContext!");
                     return;
                 }
 
-                // Add the temporary canvas.
                 var container = canvaso.parentNode;
                 canvas = document.createElement("canvas");
                 if (!canvas) {
@@ -42,12 +40,16 @@ if (window.addEventListener) {
                 canvas.height = canvaso.height;
                 container.appendChild(canvas);
 
+                var lineWidth = document.getElementById("lineWidth"),
+                    fillColor = document.getElementById("fillColor"),
+                    strokeColor = document.getElementById("strokeColor");
+
                 context = canvas.getContext("2d");
-                context.strokeStyle = "black";
-                context.lineWidth = 10;
+                context.strokeStyle = strokeColor.value;
+                context.lineWidth = lineWidth.value;
+                context.fillStyle = fillColor.value;
                 context.lineJoin = context.lineCap = "round";
 
-                // Get the tool select input.
                 var tool_select = document.getElementById("dtool");
                 if (!tool_select) {
                     alert("Error: failed to get the dtool element!");
@@ -55,48 +57,55 @@ if (window.addEventListener) {
                 }
                 tool_select.addEventListener("change", ev_tool_change, false);
 
-                // Activate the default tool.
                 if (tools[tool_default]) {
                     tool = new tools[tool_default]();
                     tool_select.value = tool_default;
                 }
 
-                // Attach the mousedown, mousemove and mouseup event listeners.
                 canvas.addEventListener("mousedown", ev_canvas, false);
                 canvas.addEventListener("mousemove", ev_canvas, false);
                 canvas.addEventListener("mouseup", ev_canvas, false);
+                lineWidth.addEventListener("input", changeLineWidth, false);
+                fillColor.addEventListener("input", changeFillStyle, false);
+                strokeColor.addEventListener("input", changeStrokeStyle, false);
             }
 
-            // The general-purpose event handler. This function just determines the mouse
-            // position relative to the canvas element.
+            function changeLineWidth() {
+                context.lineWidth = this.value;
+                stopPropagation();
+            }
+
+            function changeStrokeStyle() {
+                context.strokeStyle = this.value;
+                stopPropagation();
+            }
+
+            function changeFillStyle() {
+                context.fillStyle = this.value;
+                stopPropagation();
+            }
+
             function ev_canvas(ev) {
                 if (ev.layerX || ev.layerX == 0) {
-                    // Firefox
                     ev._x = ev.layerX;
                     ev._y = ev.layerY;
                 } else if (ev.offsetX || ev.offsetX == 0) {
-                    // Opera
                     ev._x = ev.offsetX;
                     ev._y = ev.offsetY;
                 }
 
-                // Call the event handler of the tool.
                 var func = tool[ev.type];
                 if (func) {
                     func(ev);
                 }
             }
 
-            // The event handler for any changes made to the tool selector.
             function ev_tool_change(ev) {
                 if (tools[this.value]) {
                     tool = new tools[this.value]();
                 }
             }
 
-            // This function draws the #imageTemp canvas on top of #imageView, after which
-            // #imageTemp is cleared. This function is called each time when the user
-            // completes a drawing operation.
             function img_update() {
                 contexto.drawImage(canvas, 0, 0);
                 context.clearRect(0, 0, canvas.width, canvas.height);
@@ -104,35 +113,61 @@ if (window.addEventListener) {
 
             function updateValue() {
                 return document.getElementById("polygonSides").value;
-              }
+            }
 
-            // This object holds the implementation of each drawing tool.
+            function updateValueBezier() {
+                return document.getElementById("bezierLenght").value;
+            }
+
             var tools = {};
 
-            // The drawing pencil.
             tools.lapis = function () {
                 var tool = this;
                 this.started = false;
 
-                // This is called when you start holding down the mouse button.
-                // This starts the pencil drawing.
                 this.mousedown = function (ev) {
                     context.beginPath();
                     context.moveTo(ev._x, ev._y);
                     tool.started = true;
                 };
 
-                // This function is called every time you move the mouse. Obviously, it only
-                // draws if the tool.started state is set to true (when you are holding down
-                // the mouse button).
                 this.mousemove = function (ev) {
                     if (tool.started) {
+                        context.lineTo(ev._x, ev._y);
+                        context.stroke();
+                        coords.push([ev._x, ev._y]);
+                    }
+                };
+
+                this.mouseup = function (ev) {
+                    if (tool.started) {
+                        tool.mousemove(ev);
+                        tool.started = false;
+                        img_update();
+                    }
+                };
+                console.log(coords);
+                //download("alggo.txt", coords);
+            };
+
+            tools.ponto = function () {
+                var tool = this;
+                this.started = false;
+
+                this.mousedown = function (ev) {
+                    context.beginPath();
+                    context.moveTo(ev._x, ev._y);
+                    tool.started = true;
+                };
+
+                this.mousemove = function (ev) {
+                    if (tool.started) {
+                        context.moveTo(ev._x, ev._y);
                         context.lineTo(ev._x, ev._y);
                         context.stroke();
                     }
                 };
 
-                // This is called when you release the mouse button.
                 this.mouseup = function (ev) {
                     if (tool.started) {
                         tool.mousemove(ev);
@@ -140,42 +175,9 @@ if (window.addEventListener) {
                         img_update();
                     }
                 };
+
             };
 
-            // The drawing pencil.
-            tools.ponto = function () {
-                var tool = this;
-                this.started = false;
-
-                // This is called when you start holding down the mouse button.
-                // This starts the pencil drawing.
-                this.mousedown = function (ev) {
-                    context.beginPath();
-                    context.moveTo(ev._x, ev._y);
-                    tool.started = true;
-                };
-
-                // This function is called every time you move the mouse. Obviously, it only
-                // draws if the tool.started state is set to true (when you are holding down
-                // the mouse button).
-                this.mousemove = function (ev) {
-                    if (tool.started) {
-                        context.moveTo(ev._x, ev._y); //move to the start position
-                        context.lineTo(ev._x, ev._y); //set the end
-                        context.stroke();
-                    }
-                };
-
-                this.mouseup = function (ev) {
-                    if (tool.started) {
-                        tool.mousemove(ev);
-                        tool.started = false;
-                        img_update();
-                    }
-                };
-            };
-
-            // The line tool.
             tools.linha = function () {
                 var tool = this;
                 this.started = false;
@@ -209,7 +211,6 @@ if (window.addEventListener) {
                 };
             };
 
-            // The poligono tool.
             tools.poligono = function () {
                 var tool = this,
                     angle = Math.PI / 4;
@@ -225,7 +226,7 @@ if (window.addEventListener) {
                     if (!tool.started) {
                         return;
                     }
-                    sides = updateValue();
+                    var sides = updateValue();
 
                     var coordinates = [],
                         radius = Math.sqrt(
@@ -250,7 +251,6 @@ if (window.addEventListener) {
                             coordinates[index].y
                         );
                     }
-                    
                     context.fill();
                     context.closePath();
                 };
@@ -264,42 +264,43 @@ if (window.addEventListener) {
                 };
             };
 
-            // The bezier tool.
             tools.bezier = function () {
                 var tool = this;
                 this.started = false;
 
-                // This is called when you start holding down the mouse button.
-                // This starts the pencil drawing.
                 this.mousedown = function (ev) {
                     tool.started = true;
                     tool.x0 = ev._x;
                     tool.y0 = ev._y;
                 };
 
-                // This function is called every time you move the mouse. Obviously, it only
-                // draws if the tool.started state is set to true (when you are holding down
-                // the mouse button).
                 this.mousemove = function (ev) {
                     if (!tool.started) {
                         return;
                     }
 
-                    var midx1 = canvas.width/4,
-                        midy1 = canvas.height/4,
+                    var tamanho = updateValueBezier();
+                    var midx1 = canvas.width / tamanho,
+                        midy1 = canvas.height / tamanho,
                         midx2 = canvas.width - midx1,
                         midy2 = canvas.height - midy1;
 
                     context.clearRect(0, 0, canvas.width, canvas.height);
 
                     context.beginPath();
-                    context.moveTo(tool.x0, tool.y0);
-			        context.bezierCurveTo(midx1, midy1, midx2, midy2, ev._x, ev._y);
+                    context.moveTo(ev._x, ev._y);
+                    context.bezierCurveTo(
+                        midx1,
+                        midy1,
+                        midx2,
+                        midy2,
+                        tool.x0,
+                        tool.y0
+                    );
                     context.stroke();
                     context.closePath();
                 };
 
-                // This is called when you release the mouse button.
                 this.mouseup = function (ev) {
                     if (tool.started) {
                         tool.mousemove(ev);
@@ -309,34 +310,38 @@ if (window.addEventListener) {
                 };
             };
 
-            // The circulo tool.
             tools.circulo = function () {
                 var tool = this;
                 this.started = false;
 
-                // This is called when you start holding down the mouse button.
-                // This starts the pencil drawing.
                 this.mousedown = function (ev) {
                     tool.started = true;
                     tool.x0 = ev._x;
                     tool.y0 = ev._y;
                 };
 
-                // This function is called every time you move the mouse. Obviously, it only
-                // draws if the tool.started state is set to true (when you are holding down
-                // the mouse button).
                 this.mousemove = function (ev) {
                     if (!tool.started) {
                         return;
                     }
 
-                    var radius = Math.sqrt(Math.pow((tool.x0 - ev._x), 2) + Math.pow((tool.y0 - ev._y), 2));
+                    var radius = Math.sqrt(
+                        Math.pow(tool.x0 - ev._x, 2) +
+                            Math.pow(tool.y0 - ev._y, 2)
+                    );
                     context.beginPath();
-                    context.arc(tool.x0, tool.y0, radius, 0, 2 * Math.PI, false);
+                    context.arc(
+                        tool.x0,
+                        tool.y0,
+                        radius,
+                        0,
+                        2 * Math.PI,
+                        false
+                    );
+
                     context.fill();
                 };
 
-                // This is called when you release the mouse button.
                 this.mouseup = function (ev) {
                     if (tool.started) {
                         tool.mousemove(ev);
@@ -359,3 +364,16 @@ function erase() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 }
+
+function download() {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(coords));
+    element.setAttribute('download', "filename.txt");
+  
+    element.style.display = 'none';
+    document.body.appendChild(element);
+  
+    element.click();
+  
+    document.body.removeChild(element);
+  }
