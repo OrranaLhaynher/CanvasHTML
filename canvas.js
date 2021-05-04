@@ -1,3 +1,4 @@
+//import fs from 'fs';
 var coords = [];
 
 if (window.addEventListener) {
@@ -7,7 +8,7 @@ if (window.addEventListener) {
             var canvas, context, canvaso, contexto;
 
             var tool;
-            var tool_default = "ponto";
+            var tool_default = "lapis";
 
             function init() {
                 canvaso = document.getElementById("canvas");
@@ -39,8 +40,14 @@ if (window.addEventListener) {
                 canvas.height = canvaso.height;
                 container.appendChild(canvas);
 
+                var lineWidth = document.getElementById("lineWidth"),
+                    fillColor = document.getElementById("fillColor"),
+                    strokeColor = document.getElementById("strokeColor");
+
                 context = canvas.getContext("2d");
-                context.lineWidth = 10;
+                context.strokeStyle = strokeColor.value;
+                context.lineWidth = lineWidth.value;
+                context.fillStyle = fillColor.value;
                 context.lineJoin = context.lineCap = "round";
 
                 var tool_select = document.getElementById("dtool");
@@ -58,6 +65,24 @@ if (window.addEventListener) {
                 canvas.addEventListener("mousedown", ev_canvas, false);
                 canvas.addEventListener("mousemove", ev_canvas, false);
                 canvas.addEventListener("mouseup", ev_canvas, false);
+                lineWidth.addEventListener("input", changeLineWidth, false);
+                fillColor.addEventListener("input", changeFillStyle, false);
+                strokeColor.addEventListener("input", changeStrokeStyle, false);
+            }
+
+            function changeLineWidth() {
+                context.lineWidth = this.value;
+                stopPropagation();
+            }
+
+            function changeStrokeStyle() {
+                context.strokeStyle = this.value;
+                stopPropagation();
+            }
+
+            function changeFillStyle() {
+                context.fillStyle = this.value;
+                stopPropagation();
             }
 
             function ev_canvas(ev) {
@@ -86,7 +111,42 @@ if (window.addEventListener) {
                 context.clearRect(0, 0, canvas.width, canvas.height);
             }
 
+            function updateValue() {
+                return document.getElementById("polygonSides").value;
+            }
+
+            function updateValueBezier() {
+                return document.getElementById("bezierLenght").value;
+            }
+
             var tools = {};
+
+            tools.lapis = function () {
+                var tool = this;
+                this.started = false;
+
+                this.mousedown = function (ev) {
+                    context.beginPath();
+                    context.moveTo(ev._x, ev._y);
+                    tool.started = true;
+                };
+
+                this.mousemove = function (ev) {
+                    if (tool.started) {
+                        context.lineTo(ev._x, ev._y);
+                        context.stroke();
+                        coords.push([ev._x, ev._y]);
+                    }
+                };
+
+                this.mouseup = function (ev) {
+                    if (tool.started) {
+                        tool.mousemove(ev);
+                        tool.started = false;
+                        img_update();
+                    }
+                };
+            };
 
             tools.ponto = function () {
                 var tool = this;
@@ -150,6 +210,162 @@ if (window.addEventListener) {
                 };
             };
 
+            tools.poligono = function () {
+                var tool = this,
+                    angle = Math.PI / 4;
+                this.started = false;
+
+                this.mousedown = function (ev) {
+                    tool.started = true;
+                    tool.x0 = ev._x;
+                    tool.y0 = ev._y;
+                };
+
+                this.mousemove = function (ev) {
+                    if (!tool.started) {
+                        return;
+                    }
+                    var sides = updateValue();
+
+                    var coordinates = [],
+                        radius = Math.sqrt(
+                            Math.pow(tool.x0 - ev._x, 2) +
+                                Math.pow(tool.y0 - ev._y, 2)
+                        ),
+                        index = 0;
+
+                    for (index = 0; index < sides; index++) {
+                        coordinates.push({
+                            x: tool.x0 + radius * Math.cos(angle),
+                            y: tool.y0 - radius * Math.sin(angle),
+                        });
+                        angle += (2 * Math.PI) / sides;
+                    }
+
+                    context.beginPath();
+                    context.moveTo(coordinates[0].x, coordinates[0].y);
+                    for (index = 1; index < sides; index++) {
+                        context.lineTo(
+                            coordinates[index].x,
+                            coordinates[index].y
+                        );
+                    }
+                    context.fill();
+                    context.closePath();
+
+                    var coordenadas = coordinates.values();
+                    for (let letter of coordenadas) {
+                        coords.push([letter.x, letter.y]);
+                    }
+                };
+
+                this.mouseup = function (ev) {
+                    if (tool.started) {
+                        tool.mousemove(ev);
+                        tool.started = false;
+                        img_update();
+                    }
+                };
+            };
+
+            tools.bezier = function () {
+                var tool = this;
+                this.started = false;
+
+                this.mousedown = function (ev) {
+                    tool.started = true;
+                    tool.x0 = ev._x;
+                    tool.y0 = ev._y;
+                };
+
+                this.mousemove = function (ev) {
+                    if (!tool.started) {
+                        return;
+                    }
+
+                    var tamanho = updateValueBezier();
+                    var midx1 = canvas.width / tamanho,
+                        midy1 = canvas.height / tamanho,
+                        midx2 = canvas.width - midx1,
+                        midy2 = canvas.height - midy1;
+
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+
+                    context.beginPath();
+                    context.moveTo(ev._x, ev._y);
+                    context.bezierCurveTo(
+                        midx1,
+                        midy1,
+                        midx2,
+                        midy2,
+                        tool.x0,
+                        tool.y0
+                    );
+                    context.stroke();
+                    context.closePath();
+                    coords.push([
+                        ev._x,
+                        ev._y,
+                        midx1,
+                        midy1,
+                        midx2,
+                        midy2,
+                        tool.x0,
+                        tool.y0,
+                    ]);
+                };
+
+                this.mouseup = function (ev) {
+                    if (tool.started) {
+                        tool.mousemove(ev);
+                        tool.started = false;
+                        img_update();
+                    }
+                };
+            };
+
+            tools.circulo = function () {
+                var tool = this;
+                this.started = false;
+
+                this.mousedown = function (ev) {
+                    tool.started = true;
+                    tool.x0 = ev._x;
+                    tool.y0 = ev._y;
+                };
+
+                this.mousemove = function (ev) {
+                    if (!tool.started) {
+                        return;
+                    }
+
+                    var radius = Math.sqrt(
+                        Math.pow(tool.x0 - ev._x, 2) +
+                            Math.pow(tool.y0 - ev._y, 2)
+                    );
+                    context.beginPath();
+                    context.arc(
+                        tool.x0,
+                        tool.y0,
+                        radius,
+                        0,
+                        2 * Math.PI,
+                        false
+                    );
+
+                    context.fill();
+                    coords.push([tool.x0, tool.y0]);
+                };
+
+                this.mouseup = function (ev) {
+                    if (tool.started) {
+                        tool.mousemove(ev);
+                        tool.started = false;
+                        img_update();
+                    }
+                };
+            };
+
             init();
         },
         false
@@ -163,36 +379,6 @@ function erase() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         coords = [];
     }
-}
-
-function make_base() {
-    canvas = document.getElementById("canvas");
-    var ctx = canvas.getContext("2d");
-    base_image = new Image();
-    base_image.src = 'E0ZmpE-WEAoNY6k.jpg';
-    base_image.onload = function(){
-        ctx.drawImage(base_image, 0, 0);
-    }
-}
-
-var imageLoader = document.getElementById('imageLoader');
-    imageLoader.addEventListener('change', handleImage, false);
-var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
-
-
-function handleImage(e){
-    var reader = new FileReader();
-    reader.onload = function(event){
-        var img = new Image();
-        img.onload = function(){
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img,0,0);
-        }
-        img.src = event.target.result;
-    }
-    reader.readAsDataURL(e.target.files[0]);     
 }
 
 function download() {
