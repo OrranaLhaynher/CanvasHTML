@@ -18,75 +18,16 @@
                 <label
                     >Ferramenta de desenho:
                     <select id="dtool">
-                        <option value="lapis">Lápis</option>
                         <option value="ponto">Ponto</option>
                         <option value="linha">Linha</option>
-                        <option value="poligono">Polígono</option>
-                        <option value="bezier">Bezier</option>
-                        <option value="circulo">Círculo</option>
                     </select></label
                 >
             </p>
 
             <p>
-                <label
-                    >Cor do traço: <input id="strokeColor" type="color"
-                /></label>
-            </p>
-            <p>
-                <label
-                    >Cor de preenchimento: <input id="fillColor" type="color"
-                /></label>
-            </p>
-
-            <p>
-                <label
-                    >Espessura da linha de desenho:
-                    <input
-                        id="lineWidth"
-                        type="range"
-                        value="1"
-                        step="1"
-                        min="1"
-                        max="20"
-                        oninput="this.nextElementSibling.value = this.value"
-                    />
-                    <output>1</output></label
-                >
-            </p>
-
-            <p>
-                <label
-                    >Quantidade de lados do polígono:
-                    <input
-                        id="polygonSides"
-                        type="range"
-                        value="3"
-                        step="1"
-                        min="3"
-                        max="10"
-                        oninput="this.nextElementSibling.value = this.value"
-                        onchange="updateValue()"
-                    />
-                    <output>3</output></label
-                >
-            </p>
-
-            <p>
-                <label
-                    >Tamanho da bezier:
-                    <input
-                        id="bezierLenght"
-                        type="range"
-                        value="2"
-                        step="1"
-                        min="2"
-                        max="6"
-                        oninput="this.nextElementSibling.value = this.value"
-                        onchange="updateValueBezier()"
-                    />
-                    <output>2</output></label
-                >
+                <button onclick="make_base()">
+                    Upload imagem
+                </button>
             </p>
 
             <input
@@ -100,6 +41,8 @@
             <button onclick="download()">
                 Exportar coordenadas para arquivo .txt
             </button>
+
+            <input type="file" id="imageLoader" name="imageLoader"/>
         </div>
 
         <div id="teste"></div>
